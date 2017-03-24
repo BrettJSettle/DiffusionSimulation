@@ -4,8 +4,9 @@ import threading
 from qtpy import QtWidgets, QtCore
 import pyqtgraph as pg
 from pyqtgraph.console import ConsoleWidget
-from gen import models, uniform, save_model, Model, save_models
+from gen import models, uniform, save_model, Model, save_models, HIDDEN_AMPLITUDE, AMPLITUDE
 from puff import Puff
+
 
 class PuffTable(pg.TableWidget):
     def __init__(self):
@@ -266,14 +267,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.pointSpin.setRange(1, 1000)
         self.puffTable = PuffTable()
 
-        def genPoints():
+        self.minPuffSpin = QtWidgets.QSpinBox()
+        self.minPuffSpin.setValue(0)
+
+        def generatePuffs():
             m = self.getModel()
-            points = uniform(self.pointSpin.value(), [m.nx, m.ny])
-            puffs = [Puff(p[0], p[1]) for p in points]
-            self.puffTable.setPuffs(puffs)
+            m.genPuffs(self.pointSpin.value(), amplitude=AMPLITUDE)
+
+            m.genPuffs(self.minPuffSpin.value(), amplitude=HIDDEN_AMPLITUDE, reset=False)
+
+            self.puffTable.setPuffs(m.puffs)
 
         genPointsButton = QtWidgets.QPushButton("Generate Points")
-        genPointsButton.pressed.connect(genPoints)
+        genPointsButton.pressed.connect(generatePuffs)
         generateButton = QtWidgets.QPushButton("Generate")
         generateButton.pressed.connect(self.generate)
         buttonBox = QtWidgets.QWidget()
@@ -283,6 +289,7 @@ class MainWindow(QtWidgets.QMainWindow):
         buttonBox.setLayout(buttonLayout)
 
         layout.addRow("Puff Sites", self.pointSpin)
+        layout.addRow("Hidden Sites", self.minPuffSpin)
         layout.addRow(self.puffTable)
         layout.addRow(buttonBox)
         w.setLayout(layout)

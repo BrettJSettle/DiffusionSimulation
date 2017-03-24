@@ -1,5 +1,10 @@
 import numpy as np
 from puff import Puff
+
+AMPLITUDE = 1
+HIDDEN_AMPLITUDE = .1
+
+
 data = [[260.916,   63.486],
 [268.831,   324.685],
 [276.746,   421.646],
@@ -20,7 +25,6 @@ data = [[260.916,   63.486],
 [419.219,   150.552]]
 
 
-
 data = np.array(data) // 4 - [20, 0]
 
 def uniform(points, size):
@@ -30,7 +34,7 @@ def uniform(points, size):
 
 class Model():
 
-    def __init__(self, **kargs): #d, dt, dx, dy, t_max, x_max, y_max, puffs, sequestration = 1, refresh=20):
+    def __init__(self, **kargs):
         self.d = kargs.get('d', 20)
         self.dt = kargs.get('dt', .05)
         self.dx = kargs.get('dx', 166)
@@ -53,18 +57,25 @@ class Model():
 
         puffs = kargs.get('puffs', 30)
         if isinstance(puffs, int):
-            self.genPuffs(puffs)
+            self.genPuffs(puffs, amplitude=AMPLITUDE)
         else:
             self.puffs = puffs
             self.puffCount = len(puffs)
 
+        hidden_puffs = kargs.get('hidden_puffs', 0)
+        self.genPuffs(hidden_puffs, amplitude=HIDDEN_AMPLITUDE, reset=False)
+
     def finished(self):
         return all([p.finished() for p in self.puffs])
         
-        
-    def genPuffs(self, n):
-        self.puffCount = n
-        self.puffs = [Puff(a, b) for a, b in uniform(n, [self.nx, self.ny])]
+    def genPuffs(self, n, amplitude=AMPLITUDE, reset=True):        
+        puffs = [Puff(a, b, amplitude) for a, b in uniform(n, [self.nx, self.ny])]
+        if reset:
+            self.puffs = puffs
+        else:
+            self.puffs.extend(puffs)
+
+        self.puffCount = len(self.puffs)
 
     def export(self, fname):
         # x y amplitude openDuration 
@@ -120,7 +131,6 @@ class Model():
 d = 20 # um**2/s
 
 models = {'Science Signaling': Model(d=d, dt=.01, dx=50, dy=50, t_max=1000, x_max=8000, y_max=12000, puffs=[Puff(*p) for p in data], refresh=100), 
-        'Sample': Model(d=d, dt=.05, dx=100, dy=100, t_max=4000, x_max=10000, y_max=10000, puffs=10, refresh=20),
         'Empty': Model(puffs=30)}
 
 import pickle, os

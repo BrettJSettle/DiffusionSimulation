@@ -33,6 +33,7 @@ def parseArgs():
 					help="Number of simulations to run")
 	parser.add_argument('--stop-early', action="store_true", default=False,
 					help="Stop once all puffs are closed")
+	parser.add_argument("--hidden", type=int, default=0, help="Hidden sites to generate")
 
 	args = dict(parser.parse_args()._get_kwargs())
 	
@@ -42,6 +43,7 @@ def parseArgs():
 	args['sequestration'] = args.pop('s')
 	args['puffs'] = args.pop('p')
 	args['refresh'] = args.pop('r')
+	args['hidden_puffs'] = args.pop('hidden')
 
 	return {k:v for k, v in args.items() if v is not None}
 
@@ -50,9 +52,10 @@ if __name__ == '__main__':
 	n = args.pop('n')
 	
 	##### SETTINGS ###
-	n = 40
-	args['t_max'] = 2000
+	n = 10
+	args['t_max'] = 1000
 	args['puffs'] = 30
+	args['hidden_puffs'] = 10
 	args['stop_early'] = True
 	#####
 
