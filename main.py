@@ -84,7 +84,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.imageview.view.keyPressEvent = viewKeyPress
 
         def saveModel():
+            puffs = self.puffs
             model = self.getModel()
+            model.puffs = puffs
             name = QtWidgets.QInputDialog.getText(self, "Enter a model name", "Enter a model name")
             if name is not None and len(name) > 0:
                 save_model(name, m)
@@ -168,6 +170,31 @@ class MainWindow(QtWidgets.QMainWindow):
         m = self.menuBar()
         fileMenu = m.addMenu("File")
         self.saveResultsAction = fileMenu.addAction("Save Results", self.saveResults)
+        fileMenu.addAction("Save Movie", lambda : np.savetxt("movie.txt", self.imageview.image))
+        plotMenu = m.addMenu("Plot")
+
+        def plotTTO():
+            vals = [p.timeToOpen for p in self.puffTable.puffs]
+            a, b = np.histogram(vals, 50)
+            pg.plot(x=b, y=a, stepMode=True, title="Puff Time To Open (ms)")
+
+        def plotOD():
+            vals = [p.openDuration for p in self.puffTable.puffs]
+            a, b = np.histogram(vals, 50)
+            pg.plot(x=b, y=a, stepMode=True, title="Puff Open Duration (ms)")
+
+        def plotPuffs():
+            self.plotItem = pg.PlotWidget()
+            for p in self.puffs:
+                self.plotItem.addItem(pg.PlotDataItem(p.concentrations))
+            self.plotItem.show()
+
+
+        plotMenu.addAction("Plot Time To Open", plotTTO)
+        plotMenu.addAction("Plot Open Duration", plotOD)
+        plotMenu.addAction("Plot Puffs", plotPuffs)
+        
+
         m.addAction("Quit", self.close)
 
     def saveResults(self):
@@ -195,6 +222,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.mouse = [int(mouse.x()), int(mouse.y())]
 
     def mousePressed(self, ev):
+    
         if isinstance(ev, pg.ScatterPlotItem):
             pt = ev.ptsClicked[0]
             for p in self.puffs:
@@ -335,7 +363,8 @@ class MainWindow(QtWidgets.QMainWindow):
         sizes = []
         colors = []
         for puff in self.puffTable.puffs:
-            puff.openDuration = 0
+            if image:
+                puff.openDuration = 0
             points.append([puff.x+.5, puff.y+.5])
             sizes.append(puff.amplitude)
             colors.append((255, 255, 0) if not puff.open else (255, 0, 0))

@@ -3,6 +3,7 @@ import sys, os
 import argparse
 from gen import Model, models
 from tqdm import *
+from glob import glob
 
 def parseArgs():
 	parser = argparse.ArgumentParser()
@@ -52,7 +53,7 @@ if __name__ == '__main__':
 	n = args.pop('n')
 	
 	##### SETTINGS ###
-	n = 10
+	n = 30
 	args['t_max'] = 1000
 	args['puffs'] = 30
 	args['hidden_puffs'] = 10
@@ -64,6 +65,9 @@ if __name__ == '__main__':
 		os.mkdir(os.path.dirname(fname))
 	if os.path.exists(fname):
 		os.remove(fname)
+		
+	for f in glob('out/*'):
+		os.remove(f)
 	
 	m = Model(**args)
 	for i in tqdm(range(n)):
@@ -74,18 +78,25 @@ if __name__ == '__main__':
 		movie = np.zeros([frames, m.nx+2, m.ny+2])
 
 		movie[0, 1:-1, 1:-1] = np.random.random([m.nx, m.ny]) * .05
-		i = 1
+		j = 1
 		p = 0
 		for im in m.run(movie[0]):
-			if i % m.refresh == 0:
+			if j % m.refresh == 0:
 				movie[0] = im
 				#movie[i // m.refresh] = im
 			
-			if (100 * i) // m.nt > p:
-				p = (100 * i) // m.nt
-			i += 1
+			if (100 * j) // m.nt > p:
+				p = (100 * j) // m.nt
+			j += 1
 
 		m.export(open(str(fname), 'wb' if i == 0 else 'ab'))
+		a = []
+		for p in m.puffs:
+			a.append(p.concentrations)
+
+		arr = np.array(a)
+
+		np.savetxt(open('out/puffs_%d.txt' % i, 'wb'), arr)
 	'''
 	import pyqtgraph as pg
 	app = pg.Qt.QtGui.QApplication([])

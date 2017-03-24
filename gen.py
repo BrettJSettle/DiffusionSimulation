@@ -87,8 +87,8 @@ class Model():
         
     def handlePuffs(self, dt):
         for p in self.puffs:
-            if p.finished():
-                continue
+            #if p.finished():
+            #    continue
             valAtT = self.u[p.x, p.y]
             v = p.update(dt, valAtT)
             self.u[p.x, p.y] += v
@@ -131,7 +131,9 @@ class Model():
 d = 20 # um**2/s
 
 models = {'Science Signaling': Model(d=d, dt=.01, dx=50, dy=50, t_max=1000, x_max=8000, y_max=12000, puffs=[Puff(*p) for p in data], refresh=100), 
-        'Empty': Model(puffs=30)}
+        'No Hidden Sites': Model(puffs=30),
+        'Hidden Sites': Model(puffs=30, hidden_puffs=20),
+        }
 
 import pickle, os
 def load_models():
